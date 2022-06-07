@@ -1,6 +1,7 @@
 // @ts-nocheck
 import * as Mount from "__plasmo_mount_content_script__"
 import { useEffect, useState } from "react"
+import ReactDOM from "react-dom"
 import { createRoot } from "react-dom/client"
 
 const MountContainer = () => {
@@ -9,6 +10,10 @@ const MountContainer = () => {
 
   useEffect(() => {
     const updatePosition = async () => {
+      if (Mount.useShadowRoot !== true) {
+        return
+      }
+
       if (typeof Mount.getMountPoint !== "function") {
         return
       }
@@ -38,7 +43,9 @@ const MountContainer = () => {
     return () => window.removeEventListener("scroll", updatePosition)
   }, [])
 
-  return (
+  const useShadowRoot = Mount.useShadowRoot ?? true
+
+  return useShadowRoot ? (
     <div
       style={{
         display: "flex",
@@ -48,23 +55,28 @@ const MountContainer = () => {
       }}>
       <Mount.default />
     </div>
+  ) : (
+    <Mount.default />
   )
 }
 
 window.addEventListener("load", () => {
-  const mountPoint = document.createElement("div")
+  const useShadowRoot = Mount.useShadowRoot ?? true
+  const mountPoint = useShadowRoot
+    ? document.createElement("div")
+    : Mount.getMountPoint()
+  if (useShadowRoot) {
+    mountPoint.style.cssText = `
+      z-index: 1;
+      position: absolute;
+    `
+    const shadowHost = document.createElement("div")
 
-  mountPoint.style.cssText = `
-    z-index: 1;
-    position: absolute;
-  `
+    const shadowRoot = shadowHost.attachShadow({ mode: "open" })
+    document.body.insertAdjacentElement("beforebegin", shadowHost)
 
-  const shadowHost = document.createElement("div")
-
-  const shadowRoot = shadowHost.attachShadow({ mode: "open" })
-  document.body.insertAdjacentElement("beforebegin", shadowHost)
-
-  shadowRoot.appendChild(mountPoint)
+    shadowRoot.appendChild(mountPoint)
+  }
   const root = createRoot(mountPoint)
 
   root.render(<MountContainer />)
