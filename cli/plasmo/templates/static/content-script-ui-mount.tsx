@@ -52,6 +52,8 @@ const MountContainer = () => {
 }
 
 window.addEventListener("load", () => {
+  const _App = Mount.customProvider ? <Mount.customProvider><MountContainer /></Mount.customProvider> : <MountContainer />
+
   const mountPoint = document.createElement("div")
 
   mountPoint.style.cssText = `
@@ -67,5 +69,5 @@ window.addEventListener("load", () => {
   shadowRoot.appendChild(mountPoint)
   const root = createRoot(mountPoint)
 
-  root.render(<MountContainer />)
+  root.render(<_App />)
 })
