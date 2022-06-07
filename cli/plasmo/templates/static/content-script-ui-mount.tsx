@@ -1,7 +1,6 @@
 // @ts-nocheck
 import * as Mount from "__plasmo_mount_content_script__"
 import { useEffect, useState } from "react"
-import ReactDOM from "react-dom"
 import { createRoot } from "react-dom/client"
 
 const MountContainer = () => {
@@ -62,6 +61,14 @@ const MountContainer = () => {
 
 window.addEventListener("load", () => {
   const useShadowRoot = Mount.useShadowRoot ?? true
+  const mountContainer =
+    Mount.customProvider !== undefined ? (
+      <Mount.customProvider>
+        <MountContainer />
+      </Mount.customProvider>
+    ) : (
+      <MountContainer />
+    )
   const mountPoint = useShadowRoot
     ? document.createElement("div")
     : Mount.getMountPoint()
@@ -79,5 +86,5 @@ window.addEventListener("load", () => {
   }
   const root = createRoot(mountPoint)
 
-  root.render(<MountContainer />)
+  root.render(mountContainer)
 })
