@@ -2,6 +2,7 @@
 import * as Mount from "__plasmo_mount_content_script__"
 import { useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
+import ReactDOM from 'react-dom'
 
 const MountContainer = () => {
   const [top, setTop] = useState(0)
@@ -38,7 +39,10 @@ const MountContainer = () => {
     return () => window.removeEventListener("scroll", updatePosition)
   }, [])
 
+  const useShadowRoot = Mount.useShadowRoot
+
   return (
+    useShadowRoot ? (
     <div
       style={{
         display: "flex",
@@ -47,27 +51,31 @@ const MountContainer = () => {
         left
       }}>
       <Mount.default />
-    </div>
+    </div>)
+    : <Mount.default />
   )
 }
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
+  const useShadowRoot = Mount.useShadowRoot ?? true
   const _App = Mount.customProvider ? <Mount.customProvider><MountContainer /></Mount.customProvider> : <MountContainer />
 
-  const mountPoint = document.createElement("div")
-
-  mountPoint.style.cssText = `
-    z-index: 1;
-    position: absolute;
-  `
-
-  const shadowHost = document.createElement("div")
-
-  const shadowRoot = shadowHost.attachShadow({ mode: "open" })
-  document.body.insertAdjacentElement("beforebegin", shadowHost)
-
-  shadowRoot.appendChild(mountPoint)
-  const root = createRoot(mountPoint)
-
-  root.render(<_App />)
+  if( useShadowRoot ) {
+    const mountPoint = document.createElement("div")
+    mountPoint.style.cssText = `
+      z-index: 1;
+      position: absolute;
+    `
+  
+    const shadowHost = document.createElement("div")
+    const shadowRoot = shadowHost.attachShadow({ mode: "open" })
+    document.body.insertAdjacentElement("beforebegin", shadowHost)
+    shadowRoot.appendChild(mountPoint) 
+    const root = createRoot(mountPoint)  
+    root.render(_App)
+  } else {
+    const mountPoint = await Mount.getMountPoint()
+    const root = createRoot(mountPoint);
+    root.render(_App)
+  }
 })
